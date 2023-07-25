@@ -6,14 +6,26 @@ using API.Utils;
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = Utils.getSettings("settings.config");
 
+builder.Services.AddAuthentication().AddJwtBearer();
+builder.Services.AddAuthorizationBuilder()
+  .AddPolicy("admin", policy =>
+        policy
+            .RequireRole("admin")
+            .RequireClaim("scope", "modification"));
+builder.Services.AddHealthChecks();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddMySql<SltbetContext>(connectionString[0],Microsoft.EntityFrameworkCore.ServerVersion.AutoDetect(connectionString[0]));
+
 builder.Services.AddSwaggerGen(c =>
 {
      c.SwaggerDoc("v1", new OpenApiInfo { Title = "API", Description = "API for the Sltbetfk project", Version = "v1" });
 });
 
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
@@ -22,14 +34,27 @@ app.UseSwaggerUI(c =>
 });
 
 app.MapGet("/", () => "i am working :)").WithTags("Teste");
+app.MapGet("/auth", () => "i am working :)").WithTags("Teste").RequireAuthorization("admin");
 
 app.MapGet("/Lutadores", async (SltbetContext db) => await db.Lutadores.ToListAsync()).WithTags("Lutadores");
-app.MapGet("/Lutadores/{nome}", async (string nome,SltbetContext db) => await db.Lutadores.FindAsync(nome)).WithTags("Lutadores");
+app.MapGet("/Lutadores/{nome}", async (string nome,SltbetContext db) => {
+                                                                           var l = await db.Lutadores.FindAsync(nome);
+                                                                           if (l == null) return Results.NoContent();
+                                                                           return Results.Ok<Lutador>(l);
+                                                                        }).WithTags("Lutadores")
+                                                                          .Produces<Lutador>(200).Produces(204);
 app.MapPost("/Lutadores", async (Lutador lutador, SltbetContext db) => {
+                                                                        if(db.Lutadores.FirstOrDefault(l => l.Nome == lutador.Nome) != null){
+                                                                           return Results.BadRequest("Lutador já existe");
+                                                                        }
+
                                                                         await db.Lutadores.AddAsync(lutador);
                                                                         await db.SaveChangesAsync();
-                                                                        return Results.Ok("lutador insirido");
-                                                                    }).WithTags("Lutadores");
+                                                                        return Results.CreatedAtRoute("PostLutador", new {nome = lutador.Nome}, lutador);
+                                                                        
+                                                                    }).WithName("PostLutador").WithTags("Lutadores")
+                                                                      .Produces<Lutador>(201).Produces(400).Produces(401)
+                                                                      .RequireAuthorization("admin");
 app.MapPut("/Lutadores", async (LutadorPost lutador, SltbetContext db) => {
                                                                      await db.Lutadores
                                                                      .Where(Lutador => Lutador.Nome == lutador.Nome)
@@ -50,7 +75,9 @@ app.MapPut("/Lutadores", async (LutadorPost lutador, SltbetContext db) => {
                                                                      Lutador => Lutador.Pasta,
                                                                      Lutador => lutador.Pasta));
                                                                      return Results.Ok("Lutador atualizado");
-                                                                  }).WithTags("Lutadores");
+                                                                  }).WithTags("Lutadores")
+                                                                    .Produces(201).Produces(400).Produces(401)
+                                                                    .RequireAuthorization("admin");
 app.MapPut("/Lutadores/sumpontuacao", async (LutadorPont lutador, SltbetContext db) => {
                                                                      await db.Lutadores
                                                                      .Where(Lutador => Lutador.Nome == lutador.Nome)
@@ -65,11 +92,11 @@ app.MapPut("/Lutadores/sumpontuacao", async (LutadorPont lutador, SltbetContext 
                                                                      Lutador => Lutador.Pontos,
                                                                      Lutador => Lutador.Pontos + lutador.Pontos));
                                                                      return Results.Ok("Lutador atualizado");
-                                                                  }).WithTags("Lutadores");
+                                                                  }).WithTags("Lutadores").RequireAuthorization("admin");
 app.MapDelete("/Lutadores", async (string nome, SltbetContext db) => {
                                                                     await db.Lutadores.Where(Lutador => Lutador.Nome == nome).ExecuteDeleteAsync();
                                                                     return Results.Ok("Lutador deletado");
-                                                                 }).WithTags("Lutadores");
+                                                                 }).WithTags("Lutadores").RequireAuthorization("admin");
 app.MapPatch("/Lutadores/updatetier", async(SltbetContext db) => {
                                                                      var high = await db.Lutadores.MaxAsync(Lutador => Lutador.Pontos) / 9;
                                                                      await db.Lutadores.ExecuteUpdateAsync(s => 
@@ -83,7 +110,7 @@ app.MapPatch("/Lutadores/updatetier", async(SltbetContext db) => {
                                                                         Lutador.Pontos > high * 2 ? "C"    :
                                                                         Lutador.Pontos > high ? "D" : "F"));
                                                                      return Results.Ok("tiers atualizados");
-                                                                  }).WithTags("Lutadores");
+                                                                  }).WithTags("Lutadores").RequireAuthorization("admin");
 
 app.MapGet("/Lutas", async (SltbetContext db) => await db.Lutas.ToListAsync()).WithTags("Lutas");
 app.MapGet("/Lutas/{id}", async (int id, SltbetContext db) => await db.Lutas.Where(Luta => Luta.LutaId == id).ToListAsync()).WithTags("Lutas");
@@ -94,11 +121,11 @@ app.MapPost("/Lutas", async (Luta luta, SltbetContext db) => {
                                                                await db.Lutas.AddAsync(luta);
                                                                await db.SaveChangesAsync();
                                                                return Results.Ok("Luta inserida");
-                                                             }).WithTags("Lutas");
+                                                             }).WithTags("Lutas").RequireAuthorization("admin");
 app.MapDelete("/Lutas", async (int id, SltbetContext db) => {
-                                                                     await db.Lutas.Where(Luta => Luta.LutaId == id).ExecuteDeleteAsync();
-                                                                     return Results.Ok("Luta deletada");
-                                                                  }).WithTags("Lutas");;
+                                                               await db.Lutas.Where(Luta => Luta.LutaId == id).ExecuteDeleteAsync();
+                                                               return Results.Ok("Luta deletada");
+                                                            }).WithTags("Lutas").RequireAuthorization("admin");
 
 app.Run();
 

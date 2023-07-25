@@ -42,3 +42,13 @@ F:\projetos\hehe\Sltbetfk\API\bin\Debug\net7.0\MySqlConnector.dll
 F:\projetos\hehe\Sltbetfk\API\bin\Debug\net7.0\Pomelo.EntityFrameworkCore.MySql.dll
 F:\projetos\hehe\Sltbetfk\API\bin\Debug\net7.0\System.CodeDom.dll
 F:\projetos\hehe\Sltbetfk\API\bin\Debug\net7.0\settings.config
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Microsoft.IdentityModel.JsonWebTokens.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Microsoft.IdentityModel.Logging.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Microsoft.IdentityModel.Protocols.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Microsoft.IdentityModel.Tokens.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\System.IdentityModel.Tokens.Jwt.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Scrutor.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.dll
+F:\projetos\hehe\Sltbetfk\api\bin\Debug\net7.0\Swashbuckle.AspNetCore.Filters.Abstractions.dll
